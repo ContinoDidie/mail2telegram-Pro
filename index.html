@@ -1,100 +1,134 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mail2Telegram Pro</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent: #38bdf8;
-      --text: #f8fafc;
-      --text-dim: #94a3b8;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text);
-      margin: 0;
-      padding: 16px;
-    }
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    .alias-box {
-      background: #0f172a;
-      border: 1px dashed var(--accent);
-      padding: 12px;
-      border-radius: 8px;
-      word-break: break-all;
-      font-family: monospace;
-      color: var(--accent);
-      text-align: center;
-      margin-top: 8px;
-    }
-    .badge {
-      background: rgba(56, 189, 248, 0.2);
-      color: var(--accent);
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      float: right;
-    }
-    .btn {
-      width: 100%;
-      background: #0284c7;
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail2Telegram Pro</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SDK de Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Cliente de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-4">
 
-  <div class="card">
-    <span class="badge">Plan Activo</span>
-    <h2>📩 Mi Email Alias</h2>
-    <p style="color: var(--text-dim); font-size: 0.9rem;">
-      Reenvía tus correos importantes o configúralo en tus servicios a esta dirección:
-    </p>
-    <div class="alias-box" id="userAlias">cargando_alias...@mail2telegram.pro</div>
-    <button class="btn" onclick="copyAlias()">📋 Copiar Dirección</button>
-  </div>
+    <div class="w-full max-w-md space-y-6">
+        
+        <!-- Tarjeta de Email Alias -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-lg font-bold flex items-center gap-2">
+                    <span>📩</span> Mi Email Alias
+                </h1>
+                <span class="text-xs bg-sky-500/20 text-sky-400 px-2.5 py-1 rounded-full font-medium">Plan Activo</span>
+            </div>
+            
+            <p class="text-xs text-slate-400">
+                Reenvía tus correos importantes o configúralo en tus servicios a esta dirección:
+            </p>
 
-  <div class="card">
-    <h3>⚙️ Filtros Inteligentes (Gemini AI)</h3>
-    <p style="color: var(--text-dim); font-size: 0.85rem;">
-      Gemini resumirá los correos y solo te notificará según tus reglas.
-    </p>
-    <label><input type="checkbox" checked> Resumen ejecutivo automático</label><br><br>
-    <label><input type="checkbox" checked> Alertar solo si contiene compras / facturas</label>
-  </div>
+            <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 text-center font-mono text-sky-400 text-sm tracking-wide select-all" id="alias-box">
+                cargando...
+            </div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+            <button onclick="copyAlias()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 rounded-xl transition duration-200 text-sm shadow-md">
+                📋 Copiar Dirección
+            </button>
+        </div>
 
-    // Generar o mostrar alias basado en el ID de usuario
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      const userId = tg.initDataUnsafe.user.id;
-      document.getElementById('userAlias').innerText = `user_${userId}@mail2telegram.pro`;
-    }
+        <!-- Tarjeta de Filtros Inteligentes -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+            <h2 class="text-base font-bold flex items-center gap-2">
+                <span>⚙️</span> Filtros Inteligentes (Gemini AI)
+            </h2>
+            
+            <p class="text-xs text-slate-400">
+                Gemini resumirá los correos y solo te notificará según tus reglas.
+            </p>
 
-    function copyAlias() {
-      const aliasText = document.getElementById('userAlias').innerText;
-      navigator.clipboard.writeText(aliasText);
-      tg.showAlert("¡Dirección copiada al portapapeles!");
-    }
-  </script>
+            <div class="space-y-3 pt-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" id="summarize-toggle" checked onchange="updatePreferences()" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-sky-600 focus:ring-sky-500">
+                    <span class="text-sm text-slate-200">Resumen ejecutivo automático</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" id="bills-toggle" onchange="updatePreferences()" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-sky-600 focus:ring-sky-500">
+                    <span class="text-sm text-slate-200">Alertar solo si contiene compras / facturas</span>
+                </label>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = 'https://kigkkjpvtnsjalhvyoaz.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_h-D9PMPwgsenp1he3gDPpA_pmJmnfwp';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Inicializar Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Obtener datos del usuario de Telegram
+        const user = tg.initDataUnsafe?.user || {
+            id: 999999999, // Fallback para pruebas locales en navegador
+            first_name: 'Usuario',
+            username: 'test_user'
+        };
+
+        const userAlias = `user_${user.id}@mail2telegram.pro`;
+        document.getElementById('alias-box').innerText = userAlias;
+
+        async function initUserInDatabase() {
+            try {
+                // Verificar si el usuario ya existe en Supabase
+                let { data, error } = await supabaseClient
+                    .from('mail2telegram_users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (!data) {
+                    // Si no existe, lo creamos con su alias único
+                    await supabaseClient.from('mail2telegram_users').insert([{
+                        id: user.id,
+                        first_name: user.first_name,
+                        username: user.username || '',
+                        alias_email: userAlias,
+                        summarize_enabled: true,
+                        bills_only: false
+                    }]);
+                } else {
+                    // Cargar preferencias guardadas
+                    document.getElementById('summarize-toggle').checked = data.summarize_enabled;
+                    document.getElementById('bills-toggle').checked = data.bills_only;
+                }
+            } catch (err) {
+                console.error("Error sincronizando con Supabase:", err);
+            }
+        }
+
+        async function updatePreferences() {
+            const summarize = document.getElementById('summarize-toggle').checked;
+            const bills = document.getElementById('bills-toggle').checked;
+
+            await supabaseClient
+                .from('mail2telegram_users')
+                .update({ summarize_enabled: summarize, bills_only: bills })
+                .eq('id', user.id);
+        }
+
+        function copyAlias() {
+            navigator.clipboard.writeText(userAlias);
+            tg.showAlert("¡Dirección copiada al portapapeles!");
+        }
+
+        // Ejecutar al cargar
+        initUserInDatabase();
+    </script>
 </body>
 </html>
