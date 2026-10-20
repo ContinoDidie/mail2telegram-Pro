@@ -1,0 +1,20 @@
+# Cache y archivos de ejecucion de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Entornos virtuales
+.venv/
+env/
+venv/
+ENV/
+
+# Variables de entorno y llaves secretas (¡Muy importante!)
+.env
+*.env
+
+# Archivos del sistema y editores
+.DS_Store
+.vscode/
+.idea/
